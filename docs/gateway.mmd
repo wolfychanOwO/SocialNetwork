@@ -1,0 +1,31 @@
+erDiagram
+    CLIENT_APP {
+        int id PK
+        string name
+        string contact_email
+        string api_key
+        string status
+        datetime created_at
+    }
+    
+    TOKEN {
+        int token_id PK
+        int client_id FK
+        string token_value
+        datetime expires_at
+        datetime issued_at
+    }
+    
+    REQUEST_LOG {
+        int log_id PK
+        int client_id FK
+        string endpoint
+        string method
+        int response_status
+        datetime timestamp
+    }
+
+    %% Связи:
+    CLIENT_APP ||--|{ TOKEN : "1 клиент может иметь несколько токенов"
+    CLIENT_APP ||--|{ REQUEST_LOG : "1 клиент может иметь несколько запросов"
+

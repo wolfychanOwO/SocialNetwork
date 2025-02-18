@@ -1,0 +1,30 @@
+erDiagram
+    POST_STATS {
+        uuid record_id PK
+        uuid post_id
+        int total_likes
+        int total_comments
+        int total_views
+        datetime last_update
+    }
+    
+    USER_STATS {
+        int user_id PK
+        int total_posts
+        int total_likes_given
+        int total_comments_posted
+        datetime last_update
+    }
+
+    GLOBAL_STATS {
+        int stats_id PK
+        date stats_date
+        int daily_posts
+        int daily_comments
+        int daily_likes
+        int daily_active_users
+    }
+
+    %% ClickHouse часто хранит денормализованные данные, 
+    %% но для наглядности показываем 3 таблицы с агрегированной статистикой.
+

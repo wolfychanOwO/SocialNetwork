@@ -1,0 +1,31 @@
+erDiagram
+    USERS {
+        int user_id PK
+        string username
+        string email
+        string password_hash
+        string role
+        datetime registered_at
+    }
+    
+    PROFILE {
+        int profile_id PK
+        int user_id FK
+        string display_name
+        string avatar_url
+        text about
+        datetime last_updated
+    }
+
+    SESSION {
+        int session_id PK
+        int user_id FK
+        string session_token
+        datetime created_at
+        datetime expires_at
+    }
+
+    %% Связи:
+    USERS ||--|| PROFILE : "1 пользователь -> 1 профиль (опционально)"
+    USERS ||--|{ SESSION : "1 пользователь -> много сессий"
+
