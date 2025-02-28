@@ -10,17 +10,15 @@ specification {
 }
 
 model {
-    // Пользователь системы (фронтенд/UI)
-    user = person "Пользователь" "Взаимодействует с соц. сетью через UI"
+    user = person "Пользователь"
 
-    // Вся соц. сеть как единый SoftwareSystem
     socialNetwork = softwareSystem "Социальная сеть" "Система из 4 микросервисов" {
 
         //
         // 1) API/Gateway Service
         //
         apiGateway = container "API Gateway" {
-            description "Принимает и маршрутизирует запросы, реализован на Node.js"
+            description "Принимает и маршрутизирует запросы"
             technology "Go (Gin)"
         }
 
@@ -86,7 +84,8 @@ model {
 
 views {
     // Диаграмма контейнеров
-    view containersView "Containers Diagram" {
+    view containersView {
+        description "Containers Diagram"
         include socialNetwork
         include user
 
@@ -100,4 +99,3 @@ views {
         include socialNetwork.postsDb
     }
 }
-
