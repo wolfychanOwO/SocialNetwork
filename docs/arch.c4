@@ -1,0 +1,101 @@
+specification {
+    element person {
+        style {
+            shape person
+            color green
+        }
+    }
+    element softwareSystem
+    element container
+}
+
+model {
+    user = person "Пользователь"
+
+    socialNetwork = softwareSystem "Социальная сеть" "Система из 4 микросервисов" {
+
+        //
+        // 1) API/Gateway Service
+        //
+        apiGateway = container "API Gateway" {
+            description "Принимает и маршрутизирует запросы"
+            technology "Go (Gin)"
+        }
+
+        //
+        // 2) User Service
+        //
+        userService = container "User Service" {
+            description "Регистрация, аутентификация, хранение пользователей"
+            technology "Go (Echo)"
+        }
+        userDb = container "PostgreSQL (Users)" {
+            description "База данных для User Service"
+            technology "PostgreSQL"
+            style {
+                shape cylinder
+            }
+        }
+
+        //
+        // 3) Statistics Service
+        //
+        statisticsService = container "Statistics Service" {
+            description "Подсчитывает лайки, просмотры, комментарии"
+            technology "Go (Gin)"
+        }
+        statisticsDb = container "ClickHouse (Analytics)" {
+            description "База для хранения агрегированной статистики"
+            technology "ClickHouse"
+            style {
+                shape cylinder
+            }
+        }
+
+        //
+        // 4) Posts & Comments Service (Go)
+        //
+        postsService = container "Posts & Comments Service" {
+            description "CRUD по постам и комментариям"
+            technology "Go"
+        }
+        postsDb = container "Cassandra (Posts)" {
+            description "Хранение постов, комментариев (и лайков, если нужно)"
+            technology "Cassandra"
+            style {
+                shape cylinder
+            }
+        }
+    }
+
+    //
+    // Связи (интеграции)
+    //
+    user -> socialNetwork.apiGateway "Отправляет запросы" "HTTPS"
+
+    socialNetwork.apiGateway -> socialNetwork.userService "Регистрация, логин, работа с профилями" "REST/HTTPS"
+    socialNetwork.apiGateway -> socialNetwork.postsService "CRUD по постам, комментариям" "REST/HTTPS"
+    socialNetwork.apiGateway -> socialNetwork.statisticsService "Получение статистики (лайки, просмотры, комменты)" "REST/HTTPS"
+
+    socialNetwork.userService -> socialNetwork.userDb "Читает/пишет пользователей" "SQL"
+    socialNetwork.statisticsService -> socialNetwork.statisticsDb "Читает/пишет статистику" "Native Protocol"
+    socialNetwork.postsService -> socialNetwork.postsDb "Читает/пишет посты, комментарии" "CQL"
+}
+
+views {
+    // Диаграмма контейнеров
+    view containersView {
+        description "Containers Diagram"
+        include socialNetwork
+        include user
+
+        include socialNetwork.apiGateway
+        include socialNetwork.userService
+        include socialNetwork.statisticsService
+        include socialNetwork.postsService
+
+        include socialNetwork.userDb
+        include socialNetwork.statisticsDb
+        include socialNetwork.postsDb
+    }
+}
