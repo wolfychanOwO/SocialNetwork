@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  user-service:
+    build: ./core/user-service
+    environment:
+      - KEYCLOAK_URL=http://keycloak:8080
+      - KEYCLOAK_REALM=testing
+      - KEYCLOAK_CLIENT_ID=user-service
+      - KEYCLOAK_CLIENT_SECRET=Es0IqbYVisWsjKLQ3EqgnWY03ydu7fRR
+      - KEYCLOAK_ADMIN_USER=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+    ports:
+      - "8001:8001"
+    depends_on:
+      - db
+      - keycloak
+
+  proxy-service:
+    build: ./core/api-gateway
+    ports:
+      - "8000:8000"
+    depends_on:
+      - user-service
+
+  db:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: users_db
+    ports:
+      - "5432:5432"
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_PROXY_HEADERS: xforwarded
+      KC_PROXY: edge
+      KC_HOSTNAME: localhost
+      KC_HTTP_ENABLED: "true"
+    ports:
+      - "8080:8080"
+    command: ["start-dev", "--http-enabled=true"]
