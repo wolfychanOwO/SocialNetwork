@@ -1,0 +1,14 @@
+server:
+  port: 8081
+
+database:
+  host: user-service
+  port: 5432
+  user: user
+  password: userpass
+  dbname: users
+  sslmode: disable
+
+logging:
+  level: debug
+
