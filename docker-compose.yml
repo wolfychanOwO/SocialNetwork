@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: ./core/gateway/Dockerfile
+    container_name: gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - user-service
+
+  user-service:
+    build:
+      context: .
+      dockerfile: ./core/user-service/Dockerfile
+    container_name: user-service
+    ports:
+      - "8081:8081"
+    environment:
+      SERVER_PORT: 8081
+      DB_HOST: user-service
+      DB_PORT: 5432
+      DB_USER: user
+      DB_PASSWORD: userpass
+      DB_NAME: users
+      DB_SSLMODE: disable
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:13
+    container_name: user-service-postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: userpass
+      POSTGRES_DB: users
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+
