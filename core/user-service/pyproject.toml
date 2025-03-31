@@ -2,7 +2,7 @@
 name = "user-service"
 version = "0.1.0"
 description = ""
-authors = ["ilyasokur <47240755+ilyasokur@users.noreply.github.com>"]
+authors = ["wolfychanOwO <102466423+wolfychanOwO@users.noreply.github.com>"]
 readme = ""
 
 [tool.poetry.dependencies]
@@ -22,6 +22,8 @@ cryptography = "^44.0.2"
 asyncpg = "^0.30.0"
 python-jose = {extras = ["cryptography"], version = "^3.4.0"}
 pydantic-settings = "^2.8.1"
+aiokafka = "^0.12.0"
+kafka-python = "^2.1.5"
 
 
 [tool.poetry.group.dev.dependencies]

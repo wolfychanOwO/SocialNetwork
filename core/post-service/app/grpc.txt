@@ -1,0 +1,2 @@
+poetry run python -m grpc_tools.protoc  -I=app/proto  --python_out=app/generated  --grpc_python_out=app/generated  app/proto/post.proto
+
