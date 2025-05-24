@@ -1,22 +1,27 @@
+# app/service/auth.py
 import requests
 from jose import jwt
-from passlib.context import CryptContext
-
 from app.config import settings
-from app.arch.methods import UserMethods
+
+from app.arch.methods import UserMethod
 from app.models.schema import UserCreate, UserLogin
+
+from passlib.context import CryptContext
+from app.service.kafka_producer import KafkaProducerService
+import asyncio
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-
 class AuthService:
-    def __init__(self, user_methods: UserMethods):
-        self.user_methods = user_methods
+    def __init__(self, method: UserMethod, broker: KafkaProducerService):
+        self.method = method
         self.keycloak_openid_config = self._get_openid_config()
+        self.broker = broker
+        
 
     def _get_openid_config(self):
         url = f"{settings.KEYCLOAK_URL}/realms/{settings.KEYCLOAK_REALM}/.well-known/openid-configuration"
-        return requests.get(url).json()
+        return requests.get(url.replace('localhost', 'keycloak', 1)).json()
 
     def _get_admin_token(self):
         url = f"{settings.KEYCLOAK_URL}/realms/master/protocol/openid-connect/token"
@@ -26,7 +31,7 @@ class AuthService:
             "password": settings.KEYCLOAK_ADMIN_PASSWORD,
             "grant_type": "password"
         }
-        response = requests.post(url, data=data)
+        response = requests.post(url.replace('localhost', 'keycloak', 1), data=data)
         return response.json()["access_token"]
 
     def register_user(self, user_data: UserCreate):
@@ -49,7 +54,7 @@ class AuthService:
             }]
         }
 
-        response = requests.post(url, json=payload, headers=headers)
+        response = requests.post(url.replace('localhost', 'keycloak', 1), json=payload, headers=headers)
 
         if response.status_code != 201:
             raise ValueError(f"Failed to create user in Keycloak: {response.text}")
@@ -63,7 +68,9 @@ class AuthService:
 
         hashed_password = pwd_context.hash(user_data.hashed_password)
         user_data.hashed_password = hashed_password
-        return self.user_methods.create_user(user_data, keycloak_id)
+        user = self.method.create_user(user_data, keycloak_id)
+        self.broker.send("users", {"action": "create", "user": {"id": str(user.id), "username": user.username, "email": user.email, "created_at": str(user.created_at.isoformat())}})
+        return user
 
     def authenticate_user(self, login_data: UserLogin):
         token_url = self.keycloak_openid_config["token_endpoint"]
@@ -76,8 +83,7 @@ class AuthService:
             "grant_type": "password"
         }
 
-        response = requests.post(token_url.replace("localhost", "keycloak"), data=data)
+        response = requests.post(token_url.replace('localhost', 'keycloak', 1), data=data)
         
 
         return response.json()
-
