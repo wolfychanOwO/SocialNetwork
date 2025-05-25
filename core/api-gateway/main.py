@@ -18,6 +18,7 @@ app.add_middleware(
 SERVICES = {
     "user": "http://user-service:8001",
     "posts": "http://post-service:8002",
+    "statistics": "http://statistics:8003"
 }
 
 
@@ -30,6 +31,14 @@ PUBLIC_ENDPOINTS = {
     "posts": [
         "/api/v1/health",
         "list_comments",
+    ],
+    "statistics": [
+        "get_post_stats",
+        "get_post_view_dynamics",
+        "get_post_likes_dynamics",
+        "get_post_comment_dynamics",
+        "get_top_posts",
+        "get_top_users"
     ]
 }
 
@@ -45,7 +54,6 @@ async def validate_token(auth_header: str) -> dict:
 def is_public_endpoint(service: str, path: str) -> bool:
     if service not in PUBLIC_ENDPOINTS:
         return False
-    
     full_path = f"/{path}" if not path.startswith("/") else path
     
     return any(
@@ -56,6 +64,7 @@ def is_public_endpoint(service: str, path: str) -> bool:
 
 @app.api_route("/{service}/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
 async def proxy(service: str, path: str, request: Request):
+    print(service)
     if service not in SERVICES:
         raise HTTPException(status_code=404, detail="Service not found")
 
@@ -75,7 +84,6 @@ async def proxy(service: str, path: str, request: Request):
         k: v for k, v in request.headers.items()
         if k.lower() not in ["host", "content-length"]
     }
-
     try:
         async with httpx.AsyncClient() as client:
             if request.method in ["POST", "PUT", "PATCH", "DELETE"]:
@@ -96,16 +104,13 @@ async def proxy(service: str, path: str, request: Request):
                     except:
                         json_data = None
                     
-                    print('test')
 
-                    if service == "posts":
-                        if path not in PUBLIC_ENDPOINTS["posts"]:
-                            print(path)
+                    if service == "posts" or service == "statistics":
+                        if path not in PUBLIC_ENDPOINTS[service]:
                             user = await validate_token(auth_header)
                             json_data['user_id'] = str(user['id'])
-                            print('test')
                         grpc_client = GrpcFactory()
-                        grpc_client = grpc_client.get_client("posts")
+                        grpc_client = grpc_client.get_client(service)
                         method = getattr(grpc_client, path, None)
                         print(method)
                         if method is None:

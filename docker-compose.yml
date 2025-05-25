@@ -99,3 +99,39 @@ services:
       KAFKA_CLUSTERS_BOOTSTRAPSERVERS: broker:29092
       DYNAMIC_CONFIG_ENABLED: 'true'
 
+  clickhouse:
+    image: clickhouse/clickhouse-service:latest
+    container_name: clickhouse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      CLICKHOUSE_DB: stats
+      CLICKHOUSE_USER: admin
+      CLICKHOUSE_PASSWORD: admin
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+
+  stats-service:
+    build: ./core/statistics-service
+    container_name: statistics-service
+    ports:
+      - "50052:50052"
+    environment:
+      - CLICKHOUSE_DNS=clickhouse:9000
+      - KAFKA_BROKERS=broker:29092
+      - KAFKA_TOPIC=post_events
+      - KAFKA_GROUP_ID=stats_group
+    depends_on:
+      - clickhouse
+      - broker
+
+volumes:
+  clickhouse_data:
