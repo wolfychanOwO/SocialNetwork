@@ -46,5 +46,3 @@ class PostGrpcClient(BaseGrpcClient):
         request = self.request_adapter.from_json(CommentsListRequest, request)
         response = await stub.ListComments(request)
         return self.request_adapter.to_json(response)
-    
-    
